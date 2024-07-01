@@ -1,0 +1,117 @@
+version: '3'
+
+services:
+
+#  apache:
+#    image: java-springboot-boilerplate/apache
+#    container_name: java-springboot-boilerplate-apache
+#    build:
+#      context: ./apache
+#      dockerfile: Dockerfile
+#    ports:
+#      - 80:80
+#      - 443:443
+#    restart: always
+#    volumes:
+#      - ./apache/conf.d:/etc/apache2/conf.d
+#      - ./apache/ssl:/etc/apache2/ssl
+#      - ./apache/logs:/var/log/apache2
+#      - ../htdocs
+
+  nginx:
+    image: java-springboot-boilerplate/nginx
+    container_name: java-springboot-boilerplate-nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+     - 80:80
+     - 443:443
+    restart: always
+    volumes:
+     - ./nginx/conf.d:/etc/nginx/conf.d
+     - ./nginx/ssl:/etc/nginx/ssl
+     - ./nginx/logs:/var/log/nginx
+     - ../htdocs:/usr/share/nginx/html
+
+  mysql:
+    image: java-springboot-boilerplate/mysql
+    container_name: java-springboot-boilerplate-mysql
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile
+    environment:
+      MYSQL_DATABASE: laraec
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+      TZ: Asia/Tokyo
+    ports:
+      - 3306:3306
+    restart: always
+    volumes:
+      - java-springboot-boilerplate-db-store:/var/lib/mysql
+      - ./mysql/logs:/var/log/mysql
+      - ./mysql/conf:/etc/mysql/conf.d
+
+  solr:
+    image: java-springboot-boilerplate/solr
+    container_name: java-springboot-boilerplate-solr
+    build:
+      context: ./solr
+      dockerfile: Dockerfile
+    ports:
+     - 8983:8983
+    restart: always
+    volumes:
+      - ./solr/logs:/var/solr/logs
+      - ./solr/data:/var/solr/data
+    entrypoint:
+      - docker-entrypoint.sh
+      - solr-precreate
+      - mycore
+
+  phpmyadmin:
+    image: java-springboot-boilerplate/phpmyadmin
+    container_name: java-springboot-boilerplate-phpmyadmin
+    build: ./phpmyadmin
+    ports:
+      - 8888:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=password
+    volumes:
+     - ./phpmyadmin/sessions:/sessions
+ 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: java-springboot-boilerplate-mailhog
+    ports:
+      - 8025:8025
+      - 25:1025
+
+  redis:
+    image: redis:latest
+    container_name: java-springboot-boilerplate-redis
+    ports:
+      - 6379:6379
+
+  s3:
+    image: minio/minio:RELEASE.2021-10-10T16-53-30Z
+    container_name: java-springboot-boilerplate-s3
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_ACCESS_KEY: "access_key"
+      MINIO_SECRET_KEY: "secret_key"
+    command: [ "--compat", "server", "/data", "--console-address", ":9001" ]
+    volumes:
+      - java-springboot-boilerplate-s3-store:/data
+
+volumes:
+  java-springboot-boilerplate-db-store:
+  java-springboot-boilerplate-solr-store:
+  java-springboot-boilerplate-s3-store:
